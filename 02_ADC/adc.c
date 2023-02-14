@@ -1,4 +1,4 @@
-el/*****************************
+/*****************************
 * Check the input voltage. 
 * and show on the led display.
 ******************************/
@@ -27,7 +27,28 @@ sbit DOUT = P2^5;
 sbit DU = P2^6;
 sbit WE = P2^7;
 
-uchar code SMGduan[] = {0x3f, 0x06, 0x5b, 0x4f, 0x6d, 0x7d, 0x07, 0x7f, 0x6f};
+uchar code SMGduan[]= {
+0x3F, 0x06, 0x5B, 0x4F, 
+0x66, 0x6D, 0x7D, 0x07, 
+0x7F, 0x6F, 0x77, 0x7C,
+0x39, 0x5C, 0x79, 0x71
+};
+/**
+数码管从
+      === A ===
+     //      //
+     F       B
+    //      //
+    === G === 
+   //      // 
+   E       C
+  //      //
+  === D ===  H(dot)
+
+So, the number 0 is 0x3F, which is 0011 1111, Highest bit is H, lowest is A, 
+the number 0, only G and H are not lit.
+*/
+
 uchar code SMGwei[] = {0xfe, 0xfd, 0xfb, 0xf7};
 
 uint voltage;
@@ -78,7 +99,7 @@ uint ReadAD(uchar cmd){
 void display(uint i){
     uchar q, b, s, g;
     static uchar wei;
-    g = i / 1000;
+    q = i / 1000;
     b = i % 1000 / 100;
     s = i % 100 / 10;
     g = i % 10;
@@ -89,7 +110,7 @@ void display(uint i){
     WE = 0;
     P0 = 0xFF;
     switch(wei){
-        case 0: DU = 1; P0 = SMGduan[q] | 0x80; DU = 0; break; //0x80 is the dot.
+        case 0: DU = 1; P0 = SMGduan[q]|0x80; DU = 0; break; //0x80 is the dot.
         case 1: DU = 1; P0 = SMGduan[b]; DU = 0; break;
         case 2: DU = 1; P0 = SMGduan[s]; DU = 0; break;
         case 3: DU = 1; P0 = SMGduan[g]; DU = 0; break;
@@ -124,4 +145,3 @@ void main(){
         i++;
     }
 }
-
