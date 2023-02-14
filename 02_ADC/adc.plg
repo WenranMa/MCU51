@@ -1,0 +1,49 @@
+<html>
+<body>
+<pre>
+<h1>µVision Build Log</h1>
+<h2>Project:</h2>
+C:\Users\mawen\Dev\GitHub\MCU51\02_ADC\adc.uvproj
+Project File Date:  02/13/2023
+
+<h2>Output:</h2>
+Build target 'Target 1'
+compiling adc.c...
+ADC.C(61): error C129: missing ';' before 'ReadAD'
+Target not created
+Build target 'Target 1'
+compiling adc.c...
+ADC.C(95): error C100: unprintable character 0xEF skipped
+ADC.C(95): error C100: unprintable character 0xBC skipped
+ADC.C(95): error C100: unprintable character 0x9B skipped
+ADC.C(96): error C141: syntax error near 'if'
+ADC.C(107): error C141: syntax error near '}', expected ';'
+ADC.C(117): error C202: 'voltage': undefined identifier
+ADC.C(118): error C202: 'voltage': undefined identifier
+ADC.C(119): error C141: syntax error near '}'
+Target not created
+Build target 'Target 1'
+compiling adc.c...
+ADC.C(121): error C141: syntax error near '}'
+Target not created
+Build target 'Target 1'
+compiling adc.c...
+linking...
+Program Size: data=16.0 xdata=0 code=900
+"adc" - 0 Error(s), 0 Warning(s).
+Build target 'Target 1'
+compiling adc.c...
+linking...
+Program Size: data=16.0 xdata=0 code=900
+"adc" - 0 Error(s), 0 Warning(s).
+Build target 'Target 1'
+linking...
+Program Size: data=16.0 xdata=0 code=900
+creating hex file from "adc"...
+"adc" - 0 Error(s), 0 Warning(s).
+Build target 'Target 1'
+compiling adc.c...
+linking...
+Program Size: data=16.0 xdata=0 code=900
+creating hex file from "adc"...
+"adc" - 0 Error(s), 0 Warning(s).

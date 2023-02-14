@@ -1,0 +1,154 @@
+C51 COMPILER V9.00   ADC                                                                   02/13/2023 23:14:18 PAGE 1   
+
+
+C51 COMPILER V9.00, COMPILATION OF MODULE ADC
+OBJECT MODULE PLACED IN adc.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE adc.c BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          /*****************************
+   2          * Check the input voltage. 
+   3          * and show on the led display.
+   4          ******************************/
+   5          
+   6          #include <reg52.h>
+   7          #include <intrins.h>
+   8          
+   9          #define MAIN_Fosc 11059200UL //
+  10          
+  11          typedef unsigned char uchar;
+  12          typedef unsigned char INT8U;
+  13          
+  14          typedef unsigned int uint;
+  15          typedef unsigned int INT16U;
+  16          
+  17          #define AD_CH0 0x94 // 光敏电阻cmd
+  18          #define AD_CH1 0xd4 // 热敏电阻cmd
+  19          #define AD_CH2 0xa4 // 电位器cmd
+  20          #define AD_CH3 0xe4 // 外部通道
+  21          
+  22          sbit CS = P3^7;
+  23          sbit DCLK = P2^1;
+  24          sbit DIN = P2^0;
+  25          sbit DOUT = P2^5;
+  26          
+  27          sbit DU = P2^6;
+  28          sbit WE = P2^7;
+  29          
+  30          uchar code SMGduan[] = {0x3f, 0x06, 0x5b, 0x4f, 0x6d, 0x7d, 0x07, 0x7f, 0x6f};
+  31          uchar code SMGwei[] = {0xfe, 0xfd, 0xfb, 0xf7};
+  32          
+  33          uint voltage;
+  34          
+  35          void SPI_WRITE(uchar DAT){
+  36   1          uchar i;
+  37   1          for(i=0; i<8; i++){
+  38   2              DCLK = 0;
+  39   2              if(DAT & 0x80){
+  40   3                  DIN = 1;
+  41   3              } else {
+  42   3                  DIN = 0;
+  43   3              }
+  44   2              DCLK = 1;
+  45   2              DAT <<= 1;
+  46   2          }
+  47   1      }
+  48          
+  49          uint SPI_Read(){
+  50   1          uchar i;
+  51   1          uint DAT;
+  52   1          for(i=0; i<12; i++){
+  53   2              DAT <<= 1;
+  54   2              DCLK = 1;
+  55   2              DCLK = 0;
+C51 COMPILER V9.00   ADC                                                                   02/13/2023 23:14:18 PAGE 2   
+
+  56   2              if(DOUT){
+  57   3                  DAT |= 0x01;
+  58   3              }
+  59   2          }
+  60   1          return DAT;
+  61   1      }
+  62          
+  63          uint ReadAD(uchar cmd){
+  64   1          uint DAT;
+  65   1          CS = 0;
+  66   1          SPI_WRITE(cmd);
+  67   1          DCLK = 0;
+  68   1          _nop_();
+  69   1          _nop_();
+  70   1          _nop_();
+  71   1          _nop_();
+  72   1          _nop_();
+  73   1          DAT = SPI_Read();
+  74   1          CS = 1;
+  75   1          return DAT;
+  76   1      }
+  77          
+  78          void display(uint i){
+  79   1          uchar q, b, s, g;
+  80   1          static uchar wei;
+  81   1          g = i / 1000;
+  82   1          b = i % 1000 / 100;
+  83   1          s = i % 100 / 10;
+  84   1          g = i % 10;
+  85   1      
+  86   1          P0 = 0xFF;
+  87   1          WE = 1;
+  88   1          P0 = SMGwei[wei];
+  89   1          WE = 0;
+  90   1          P0 = 0xFF;
+  91   1          switch(wei){
+  92   2              case 0: DU = 1; P0 = SMGduan[q] | 0x80; DU = 0; break; //0x80 is the dot.
+  93   2              case 1: DU = 1; P0 = SMGduan[b]; DU = 0; break;
+  94   2              case 2: DU = 1; P0 = SMGduan[s]; DU = 0; break;
+  95   2              case 3: DU = 1; P0 = SMGduan[g]; DU = 0; break;
+  96   2          }
+  97   1          wei++;
+  98   1          if(wei == 4){
+  99   2              wei = 0;
+ 100   2          }
+ 101   1      }
+ 102          
+ 103          void Delay_MS(INT16U ms) {
+ 104   1          INT16U i;
+ 105   1          do{
+ 106   2              i = MAIN_Fosc / 96000;
+ 107   2              while(--i){}; //96个时钟周期
+ 108   2          }while(--ms);
+ 109   1      }
+ 110          // 1ms = 0.001s
+ 111          // 0.001 / 1 / 11059200 = 11059.2 个时钟周期。
+ 112          // 11059.2 / 96 = 115.2;
+ 113          
+ 114          void main(){
+ 115   1          uchar i;
+ 116   1          while(1){
+ 117   2              if(i >= 100){ //about 00ms to sample once，easy to observe the led
+C51 COMPILER V9.00   ADC                                                                   02/13/2023 23:14:18 PAGE 3   
+
+ 118   3                  i = 0;
+ 119   3                  voltage = ReadAD(AD_CH3); // 12 bits, so the highest voltage is 4096.
+ 120   3                  voltage = voltage * 1.2207; // 5000mv / 4096 = 1.2207
+ 121   3              }
+ 122   2              display(voltage);
+ 123   2              Delay_MS(5);
+ 124   2              i++;
+ 125   2          }
+ 126   1      }
+ 127          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    320    ----
+   CONSTANT SIZE    =     13    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      3       4
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

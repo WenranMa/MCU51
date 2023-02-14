@@ -1,0 +1,426 @@
+C51 COMPILER V9.00   LED                                                                   02/13/2023 21:34:17 PAGE 1   
+
+
+C51 COMPILER V9.00, COMPILATION OF MODULE LED
+OBJECT MODULE PLACED IN led.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE led.c BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          #include <reg52.h> // 51 related registers
+   2          #include <intrins.h> // left and right shift function
+   3          
+   4          #define uint unsigned int
+   5          #define uchar unsigned char
+   6          
+   7          // 流水灯
+   8          uchar ledBits;// led bits definition
+   9          
+  10          // 中断 + 数码管
+  11          uchar icnt0; // t0 interrupt count 
+  12          uchar icnt1; 
+  13          
+  14          sbit dula = P2^6; // led location
+  15          sbit wela = P2^7; // led display number
+  16          
+  17          uchar num, b, s, g;     // for led display, highest 3 bits;
+  18          
+  19          uchar code table[]= {
+  20          0x3F, 0x06, 0x5B, 0x4F, 
+  21          0x66, 0x6D, 0x7D, 0x07, 
+  22          0x7F, 0x6F, 0x77, 0x7C,
+  23          0x39, 0x5C, 0x79, 0x71
+  24          };
+  25          // code means use rom but not ram.
+  26          
+  27          // 蜂鸣器
+  28          sbit beep = P2^3;
+  29          
+  30          // 独立按键
+  31          uchar numKey; // for test key;
+  32          
+  33          sbit key1 = P3^0;
+  34          sbit key2 = P3^1;
+  35          sbit key3 = P3^2;
+  36          sbit key4 = P3^3;
+  37          
+  38          void delay(uint z) { // delay z ms, not exact
+  39   1              uint x,y;
+  40   1              for(x = z; x > 0; x--)
+  41   1                      for(y = 114; y > 0 ; y--);              
+  42   1      } 
+  43          
+  44          // 中断+数码管
+  45          void displayLed(uchar b, uchar s, uchar g) {
+  46   1              dula = 1; //display number on
+  47   1              P0 = table[b];
+  48   1              dula = 0;
+  49   1              P0 = 0xff; // clean for blicking
+  50   1              wela = 1;  //location on 
+  51   1              P0 = 0Xfe; //1111 1110，lowest bit, p0.0, but highest location on board.
+  52   1              wela = 0;
+  53   1              delay(5);
+  54   1      
+  55   1              dula = 1;
+C51 COMPILER V9.00   LED                                                                   02/13/2023 21:34:17 PAGE 2   
+
+  56   1              P0 = table[s];
+  57   1              dula = 0;
+  58   1              P0 = 0xff;
+  59   1              wela = 1;
+  60   1              P0 = 0xfd; // 1111 1101, p0.1
+  61   1              wela = 0;
+  62   1              delay(5);
+  63   1      
+  64   1              dula = 1;
+  65   1              P0 = table[g];
+  66   1              dula = 0;
+  67   1              P0 = 0xff;
+  68   1              wela = 1;
+  69   1              P0 = 0xfb; // 1111 1011, p0.2
+  70   1              wela = 0;
+  71   1              delay(5);
+  72   1      }
+  73          
+  74          // 独立按键
+  75          void keyScan() {
+  76   1              if (key1 == 0) {
+  77   2                      delay(10);
+  78   2                      if (key1 == 0) {
+  79   3                              numKey+=1;
+  80   3                              while(!key1){
+  81   4                              }
+  82   3                      } 
+  83   2              }
+  84   1              if (key2 == 0) {
+  85   2                      delay(10);
+  86   2                      if (key2 == 0) {
+  87   3                              numKey-=1;
+  88   3                              while(!key2){
+  89   4                              }
+  90   3                      } 
+  91   2              }
+  92   1              if (key3 == 0) {
+  93   2                      delay(10);
+  94   2                      if (key3 == 0) {
+  95   3                              numKey = 0;
+  96   3                              while(!key3){
+  97   4                              }
+  98   3                      } 
+  99   2              }
+ 100   1      }
+ 101          
+ 102          void displayLed2(uchar n) {
+ 103   1              uchar s,g;
+ 104   1              s = n / 10;
+ 105   1              g = n % 10;
+ 106   1      
+ 107   1              dula = 1;
+ 108   1              P0 = table[s];
+ 109   1              dula = 0;
+ 110   1              P0 = 0xff;
+ 111   1              wela = 1;
+ 112   1              P0 = 0xbf; // 1011 1111, p0.6
+ 113   1              wela = 0;
+ 114   1              delay(5);
+ 115   1      
+ 116   1              dula = 1;
+ 117   1              P0 = table[g];
+C51 COMPILER V9.00   LED                                                                   02/13/2023 21:34:17 PAGE 3   
+
+ 118   1              dula = 0;
+ 119   1              P0 = 0xff;
+ 120   1              wela = 1;
+ 121   1              P0 = 0x7f; // 0111 1111, p0.7
+ 122   1              wela = 0;
+ 123   1              delay(5);
+ 124   1      }
+ 125          
+ 126          // 蜂鸣器
+ 127          void buzz() {
+ 128   1              beep = 0;
+ 129   1      //      delay(10);
+ 130   1      }
+ 131          
+ 132          // 矩阵键盘
+ 133          void displayLed3(uchar i) {
+ 134   1              dula = 1;
+ 135   1              P0 = table[i];
+ 136   1              dula = 0;
+ 137   1              P0 = 0xff;
+ 138   1              wela = 1;
+ 139   1              P0 = 0xef; // 1110 1111
+ 140   1              wela = 0;
+ 141   1      }
+ 142          
+ 143          void matrixKeyScan() {
+ 144   1              uchar temp, matrixKeyNum;
+ 145   1              
+ 146   1              P3 = 0xfe; // 1111 (column) 1110 (first row is 0) 
+ 147   1              temp = P3;      // read P3,
+ 148   1              temp = temp & 0xf0; // to check highest four bits has any 0
+ 149   1              if (temp != 0xf0) { // higest four bits has 0. means first row has key down.
+ 150   2                      delay(10);
+ 151   2                      temp = P3;
+ 152   2                      temp = temp & 0xf0;     // 去抖动
+ 153   2                      if(temp != 0xf0) {
+ 154   3                              temp = P3;
+ 155   3                              switch(temp){
+ 156   4                              case 0xee:       // 1110 1110
+ 157   4                                      matrixKeyNum = 0;
+ 158   4                                      break;
+ 159   4                              case 0xde:       // 1101 1110
+ 160   4                                      matrixKeyNum = 1;
+ 161   4                                      break;
+ 162   4                              case 0xbe:       // 1011 1110
+ 163   4                                      matrixKeyNum = 2;
+ 164   4                                      break;
+ 165   4                              case 0x7e:       // 0111 1110
+ 166   4                                      matrixKeyNum = 3;
+ 167   4                                      break;
+ 168   4                              }
+ 169   3                              while(temp != 0xf0) { //release key
+ 170   4                                      temp = P3;
+ 171   4                                      temp = temp & 0xf0;
+ 172   4                              }
+ 173   3                              displayLed3(matrixKeyNum);
+ 174   3                      }
+ 175   2              }
+ 176   1        
+ 177   1              P3 = 0xfd; // 1111 (column) 1101 (second row is 0) 
+ 178   1              temp = P3;      // read P3,
+ 179   1              temp = temp & 0xf0; // to check highest four bits has any 0
+C51 COMPILER V9.00   LED                                                                   02/13/2023 21:34:17 PAGE 4   
+
+ 180   1              if (temp != 0xf0) { // higest four bits has 0. means second row has key down.
+ 181   2                      delay(10);
+ 182   2                      temp = P3;
+ 183   2                      temp = temp & 0xf0;
+ 184   2                      if(temp != 0xf0) {
+ 185   3                              temp = P3;
+ 186   3                              switch(temp){
+ 187   4                              case 0xed:   // 1110 1101
+ 188   4                                      matrixKeyNum = 4;
+ 189   4                                      break;
+ 190   4                              case 0xdd:       // 1101 1101
+ 191   4                                      matrixKeyNum = 5;
+ 192   4                                      break;
+ 193   4                              case 0xbd:       // 1011 1101
+ 194   4                                      matrixKeyNum = 6;
+ 195   4                                      break;
+ 196   4                              case 0x7d:       // 0111 1101
+ 197   4                                      matrixKeyNum = 7;
+ 198   4                                      break;
+ 199   4                              }
+ 200   3                              while(temp != 0xf0) {
+ 201   4                                      temp = P3;
+ 202   4                                      temp = temp & 0xf0;
+ 203   4                              }
+ 204   3                              displayLed3(matrixKeyNum);
+ 205   3                      }
+ 206   2              }
+ 207   1      
+ 208   1              P3 = 0xfb; // 1111 (column) 1011 (third row is 0) 
+ 209   1              temp = P3;      // read P3,
+ 210   1              temp = temp & 0xf0; // to check highest four bits has any 0
+ 211   1              if (temp != 0xf0) { // higest four bits has 0. means third row has key down.
+ 212   2                      delay(10);
+ 213   2                      temp = P3;
+ 214   2                      temp = temp & 0xf0;
+ 215   2                      if(temp != 0xf0) {
+ 216   3                              temp = P3;
+ 217   3                              switch(temp){
+ 218   4                              case 0xeb:       // 1110 1011
+ 219   4                                      matrixKeyNum = 8;
+ 220   4                                      break;
+ 221   4                              case 0xdb:       // 1101 1011
+ 222   4                                      matrixKeyNum = 9;
+ 223   4                                      break;
+ 224   4                              case 0xbb:       // 1011 1011
+ 225   4                                      matrixKeyNum = 10;
+ 226   4                                      break;
+ 227   4                              case 0x7b:       // 0111 1011
+ 228   4                                      matrixKeyNum = 11;
+ 229   4                                      break;
+ 230   4                              }
+ 231   3                              while(temp != 0xf0) {
+ 232   4                                      temp = P3;
+ 233   4                                      temp = temp & 0xf0;
+ 234   4                              }
+ 235   3                              displayLed3(matrixKeyNum);
+ 236   3                      }
+ 237   2              }
+ 238   1      
+ 239   1              P3 = 0xf7; // 1111 (column) 0111 (third row is 0) 
+ 240   1              temp = P3;      // read P3,
+ 241   1              temp = temp & 0xf0; // to check highest four bits has any 0
+C51 COMPILER V9.00   LED                                                                   02/13/2023 21:34:17 PAGE 5   
+
+ 242   1              if (temp != 0xf0) { // higest four bits has 0. means third row has key down.
+ 243   2                      delay(10);
+ 244   2                      temp = P3;
+ 245   2                      temp = temp & 0xf0;
+ 246   2                      if(temp != 0xf0) {
+ 247   3                              temp = P3;
+ 248   3                              switch(temp){
+ 249   4                              case 0xe7:      // 1110 0111
+ 250   4                                      matrixKeyNum = 12;
+ 251   4                                      break;
+ 252   4                              case 0xd7:      // 1101 0111
+ 253   4                                      matrixKeyNum = 13;
+ 254   4                                      break;
+ 255   4                              case 0xb7:      // 1011 0111
+ 256   4                                      matrixKeyNum = 14;
+ 257   4                                      break;
+ 258   4                              case 0x77:      // 0111 0111
+ 259   4                                      matrixKeyNum = 15;
+ 260   4                                      break;
+ 261   4                              }
+ 262   3                              while(temp != 0xf0) {
+ 263   4                                      temp = P3;
+ 264   4                                      temp = temp & 0xf0;
+ 265   4                              }
+ 266   3                              displayLed3(matrixKeyNum);
+ 267   3                      }
+ 268   2              }
+ 269   1      }
+ 270          
+ 271          
+ 272          // 8x8 matrix
+ 273          sbit dataInput = P3^4;
+ 274          sbit shiftCLK = P3^5;
+ 275          sbit lockCLK = P3^6; 
+ 276          
+ 277          void displayMatrix() {
+ 278   1              uchar i, dat; // 变量定义放在最前面?    
+ 279   1              dat = 0xfe;
+ 280   1              lockCLK = 0;
+ 281   1              for(i=0; i<8; i++) {
+ 282   2                      shiftCLK = 0;   
+ 283   2                      if (dat & 0x01) {
+ 284   3                              dataInput = 1;
+ 285   3                      } else {
+ 286   3                              dataInput = 0;
+ 287   3                      }
+ 288   2                      shiftCLK = 1;
+ 289   2                      dat >>= 1;
+ 290   2              }
+ 291   1      
+ 292   1              dat = 0x80;
+ 293   1              for(i = 0; i < 8; i++) {
+ 294   2                      shiftCLK = 0;
+ 295   2                      if (dat & 0x01) {
+ 296   3                              dataInput = 1;
+ 297   3                      } else {
+ 298   3                              dataInput = 0;
+ 299   3                      }
+ 300   2                      shiftCLK = 1;
+ 301   2                      dat >>= 1;
+ 302   2              }
+ 303   1              lockCLK = 1;
+C51 COMPILER V9.00   LED                                                                   02/13/2023 21:34:17 PAGE 6   
+
+ 304   1      }
+ 305          
+ 306          void init() {
+ 307   1              TMOD = 0x11; // T0 and T1 work in mode 1. 
+ 308   1               
+ 309   1              TH0 = (65536 - 45872)/256;
+ 310   1              TL0 = (65536 - 45872)%256;
+ 311   1              TH1 = (65536 - 45872)/256;
+ 312   1              TL1 = (65536 - 45872)%256; // init value for 50ms
+ 313   1      
+ 314   1              EA = 1; // enble interrupt 
+ 315   1              
+ 316   1              ET0 = 1;
+ 317   1              ET1 = 1; // enable t0 t1
+ 318   1              
+ 319   1              TR0 = 1;
+ 320   1              TR1 = 1; // start t0 t1
+ 321   1      }
+ 322          
+ 323          void main()//main func can loop
+ 324          {
+ 325   1              init();
+ 326   1      
+ 327   1              ledBits = 0xfe;
+ 328   1              P1 = ledBits; //1111 1110
+ 329   1              
+ 330   1              while(1){
+ 331   2                      /*
+ 332   2                      if(icnt0 == 10) {  // 0.5s
+ 333   2                              icnt0 = 0;
+ 334   2                          ledBits = _crol_(ledBits, 1);//shift left by one bit
+ 335   2                              P1 = ledBits;
+ 336   2                      }
+ 337   2                      if(icnt1 == 5) {  // 5 x 50ms = 0.25s
+ 338   2                              icnt1 = 0;
+ 339   2                              b = num / 100;
+ 340   2                              s = num % 100 / 10;
+ 341   2                              g = num % 10;
+ 342   2                              num++;
+ 343   2                              if (num == 200) {
+ 344   2                                      num = 0;
+ 345   2                              }
+ 346   2                      }
+ 347   2                      */
+ 348   2                      /* put the above code the interrupt function.
+ 349   2                              because the keyscan delay will cause the icnt0 or icnt1 pass 10 or 5,
+ 350   2                              then they will run to 256 then go back to 0,
+ 351   2                              it will take 250 * 50 ms = 12.5s.                       
+ 352   2                      */
+ 353   2                      displayLed(b, s, g);
+ 354   2      
+ 355   2                      keyScan();
+ 356   2                      displayLed2(numKey);
+ 357   2      
+ 358   2              //      buzz();
+ 359   2      
+ 360   2              //      matrixKeyScan();
+ 361   2      
+ 362   2                      displayMatrix();
+ 363   2              }       
+ 364   1      }
+ 365          
+C51 COMPILER V9.00   LED                                                                   02/13/2023 21:34:17 PAGE 7   
+
+ 366          void T0_timer() interrupt 1 {
+ 367   1              TH0 = (65536 - 45872)/256;
+ 368   1              TL0 = (65536 - 45872)%256;
+ 369   1              icnt0++;
+ 370   1              if(icnt0 == 10) {  // 0.5s
+ 371   2                      icnt0 = 0;
+ 372   2                      ledBits = _crol_(ledBits, 1);//shift left by one bit
+ 373   2                      P1 = ledBits;
+ 374   2              }
+ 375   1      } 
+ 376          
+ 377          void T1_timer() interrupt 3 {
+ 378   1              TH1 = (65536 - 45872)/256;
+ 379   1              TL1 = (65536 - 45872)%256;
+ 380   1              icnt1++;
+ 381   1              if(icnt1 == 5) {  // 5 x 50ms = 0.25s
+ 382   2                      icnt1 = 0;
+ 383   2                      b = num / 100;
+ 384   2                      s = num % 100 / 10;
+ 385   2                      g = num % 10;
+ 386   2                      num++;
+ 387   2                      if (num == 200) {
+ 388   3                              num = 0;
+ 389   3                      }
+ 390   2              }       
+ 391   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    841    ----
+   CONSTANT SIZE    =     16    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      8       2
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
